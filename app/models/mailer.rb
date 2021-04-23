@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2020  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -294,8 +294,11 @@ class Mailer < ActionMailer::Base
     @wiki_content_url = url_for(:controller => 'wiki', :action => 'show',
                                       :project_id => wiki_content.project,
                                       :id => wiki_content.page.title)
-    mail :to => user,
-      :subject => "[#{wiki_content.project.name}] #{l(:mail_subject_wiki_content_added, :id => wiki_content.page.pretty_title)}"
+    mail(
+      :to => user,
+      :subject =>
+        "[#{wiki_content.project.name}] #{l(:mail_subject_wiki_content_added, :id => wiki_content.page.pretty_title)}"
+    )
   end
 
   # Notifies users about a new wiki content (wiki page added).
@@ -317,14 +320,19 @@ class Mailer < ActionMailer::Base
     message_id wiki_content
     @wiki_content = wiki_content
     @user = user
-    @wiki_content_url = url_for(:controller => 'wiki', :action => 'show',
-                                      :project_id => wiki_content.project,
-                                      :id => wiki_content.page.title)
-    @wiki_diff_url = url_for(:controller => 'wiki', :action => 'diff',
-                                   :project_id => wiki_content.project, :id => wiki_content.page.title,
-                                   :version => wiki_content.version)
-    mail :to => user,
-      :subject => "[#{wiki_content.project.name}] #{l(:mail_subject_wiki_content_updated, :id => wiki_content.page.pretty_title)}"
+    @wiki_content_url =
+      url_for(:controller => 'wiki', :action => 'show',
+              :project_id => wiki_content.project,
+              :id => wiki_content.page.title)
+    @wiki_diff_url =
+      url_for(:controller => 'wiki', :action => 'diff',
+              :project_id => wiki_content.project, :id => wiki_content.page.title,
+              :version => wiki_content.version)
+    mail(
+      :to => user,
+      :subject =>
+        "[#{wiki_content.project.name}] #{l(:mail_subject_wiki_content_updated, :id => wiki_content.page.pretty_title)}"
+    )
   end
 
   # Notifies users about the update of the specified wiki content
@@ -407,8 +415,8 @@ class Mailer < ActionMailer::Base
   # The email will be sent to the email address specifiedby recipient if provided.
   #
   # Exemple:
-  #   Mailer.deliver_account_activated(user, token)
-  #   Mailer.deliver_account_activated(user, token, 'foo@example.net')
+  #   Mailer.deliver_lost_password(user, token)
+  #   Mailer.deliver_lost_password(user, token, 'foo@example.net')
   def self.deliver_lost_password(user, token, recipient=nil)
     lost_password(user, token, recipient).deliver_later
   end
@@ -589,10 +597,12 @@ class Mailer < ActionMailer::Base
 
     user_ids = options[:users]
 
-    scope = Issue.open.where("#{Issue.table_name}.assigned_to_id IS NOT NULL" +
-      " AND #{Project.table_name}.status = #{Project::STATUS_ACTIVE}" +
-      " AND #{Issue.table_name}.due_date <= ?", days.day.from_now.to_date
-    )
+    scope =
+      Issue.open.where(
+        "#{Issue.table_name}.assigned_to_id IS NOT NULL" \
+          " AND #{Project.table_name}.status = #{Project::STATUS_ACTIVE}" \
+          " AND #{Issue.table_name}.due_date <= ?", days.day.from_now.to_date
+      )
     scope = scope.where(:assigned_to_id => user_ids) if user_ids.present?
     scope = scope.where(:project_id => project.id) if project
     scope = scope.where(:fixed_version_id => target_version_id) if target_version_id.present?
@@ -632,13 +642,13 @@ class Mailer < ActionMailer::Base
   # Rake will likely end, causing the in-process thread pool to be deleted, before
   # any/all of the .deliver_later emails are processed
   def self.with_synched_deliveries(&block)
-    adapter = ActionMailer::DeliveryJob.queue_adapter
+    adapter = ActionMailer::MailDeliveryJob.queue_adapter
     if adapter.is_a?(ActiveJob::QueueAdapters::AsyncAdapter)
-      ActionMailer::DeliveryJob.queue_adapter = ActiveJob::QueueAdapters::InlineAdapter.new
+      ActionMailer::MailDeliveryJob.queue_adapter = ActiveJob::QueueAdapters::InlineAdapter.new
     end
     yield
   ensure
-    ActionMailer::DeliveryJob.queue_adapter = adapter
+    ActionMailer::MailDeliveryJob.queue_adapter = adapter
   end
 
   def mail(headers={}, &block)

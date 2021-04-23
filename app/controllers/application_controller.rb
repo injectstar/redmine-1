@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2020  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -52,7 +52,7 @@ class ApplicationController < ActionController::Base
       cookies.delete(autologin_cookie_name)
       self.logged_user = nil
       set_localization
-      render_error :status => 422, :message => "Invalid form authenticity token."
+      render_error :status => 422, :message => l(:error_invalid_authenticity_token)
     end
   end
 
@@ -259,25 +259,25 @@ class ApplicationController < ActionController::Base
         url = url_for(:controller => params[:controller], :action => params[:action], :id => params[:id], :project_id => params[:project_id])
       end
       respond_to do |format|
-        format.html {
+        format.html do
           if request.xhr?
             head :unauthorized
           else
             redirect_to signin_path(:back_url => url)
           end
-        }
-        format.any(:atom, :pdf, :csv) {
+        end
+        format.any(:atom, :pdf, :csv) do
           redirect_to signin_path(:back_url => url)
-        }
-        format.api  {
+        end
+        format.api do
           if Setting.rest_api_enabled? && accept_api_auth?
             head(:unauthorized, 'WWW-Authenticate' => 'Basic realm="Redmine API"')
           else
             head(:forbidden)
           end
-        }
-        format.js   { head :unauthorized, 'WWW-Authenticate' => 'Basic realm="Redmine API"' }
-        format.any  { head :unauthorized }
+        end
+        format.js   {head :unauthorized, 'WWW-Authenticate' => 'Basic realm="Redmine API"'}
+        format.any  {head :unauthorized}
       end
       return false
     end
@@ -412,10 +412,10 @@ class ApplicationController < ActionController::Base
   end
 
   def parse_params_for_bulk_update(params)
-    attributes = (params || {}).reject {|k,v| v.blank?}
+    attributes = (params || {}).reject {|k, v| v.blank?}
     attributes.keys.each {|k| attributes[k] = '' if attributes[k] == 'none'}
     if custom = attributes[:custom_field_values]
-      custom.reject! {|k,v| v.blank?}
+      custom.reject! {|k, v| v.blank?}
       custom.keys.each do |k|
         if custom[k].is_a?(Array)
           custom[k] << '' if custom[k].delete('__none__')
@@ -562,10 +562,10 @@ class ApplicationController < ActionController::Base
     @status = arg[:status] || 500
 
     respond_to do |format|
-      format.html {
+      format.html do
         render :template => 'common/error', :layout => use_layout, :status => @status
-      }
-      format.any { head @status }
+      end
+      format.any {head @status}
     end
   end
 
@@ -599,7 +599,7 @@ class ApplicationController < ActionController::Base
 
   def render_feed(items, options={})
     @items = (items || []).to_a
-    @items.sort! {|x,y| y.event_datetime <=> x.event_datetime }
+    @items.sort! {|x, y| y.event_datetime <=> x.event_datetime}
     @items = @items.slice(0, Setting.feeds_limit.to_i)
     @title = options[:title] || Setting.app_title
     render :template => "common/feed", :formats => [:atom], :layout => false,
@@ -675,13 +675,13 @@ class ApplicationController < ActionController::Base
     tmp = []
     if value
       parts = value.split(/,\s*/)
-      parts.each {|part|
+      parts.each do |part|
         if m = %r{^([^\s,]+?)(?:;\s*q=(\d+(?:\.\d+)?))?$}.match(part)
           val = m[1]
           q = (m[2] or 1).to_f
           tmp.push([val, q])
         end
-      }
+      end
       tmp = tmp.sort_by{|val, q| -q}
       tmp.collect!{|val, q| val}
     end
@@ -692,7 +692,7 @@ class ApplicationController < ActionController::Base
 
   # Returns a string that can be used as filename value in Content-Disposition header
   def filename_for_content_disposition(name)
-    %r{(MSIE|Trident|Edge)}.match?(request.env['HTTP_USER_AGENT'].to_s) ? ERB::Util.url_encode(name) : name
+    name
   end
 
   def api_request?
@@ -722,7 +722,7 @@ class ApplicationController < ActionController::Base
   def query_statement_invalid(exception)
     logger.error "Query::StatementInvalid: #{exception.message}" if logger
     session.delete(:issue_query)
-    render_error "An error occurred while executing the query and has been logged. Please report this error to your Redmine administrator."
+    render_error l(:error_query_statement_invalid)
   end
 
   # Renders a 204 response for successful updates or deletions via the API
@@ -744,7 +744,7 @@ class ApplicationController < ActionController::Base
 
   def render_api_errors(*messages)
     @error_messages = messages.flatten
-    render :template => 'common/error_messages.api', :status => :unprocessable_entity, :layout => nil
+    render :template => 'common/error_messages', :format => [:api], :status => :unprocessable_entity, :layout => nil
   end
 
   # Overrides #_include_layout? so that #render with no arguments

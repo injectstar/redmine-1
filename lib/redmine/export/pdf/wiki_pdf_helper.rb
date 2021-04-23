@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2020  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -87,7 +87,7 @@ module Redmine
             pdf.SetFontStyle('B', 9)
             pdf.RDMCell(190, 5, l(:label_attachment_plural), "B")
             pdf.ln
-            for attachment in page.attachments
+            page.attachments.each do |attachment|
               pdf.SetFontStyle('', 8)
               pdf.RDMCell(80, 5, attachment.filename)
               pdf.RDMCell(20, 5, number_to_human_size(attachment.filesize), 0, 0, "R")

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2020  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -32,7 +32,17 @@ class IssueImport < Import
     'start_date' => 'field_start_date',
     'due_date' => 'field_due_date',
     'estimated_hours' => 'field_estimated_hours',
-    'done_ratio' => 'field_done_ratio'
+    'done_ratio' => 'field_done_ratio',
+    'unique_id' => 'field_unique_id',
+    'relation_duplicates' => 'label_duplicates',
+    'relation_duplicated' => 'label_duplicated_by',
+    'relation_blocks' => 'label_blocks',
+    'relation_blocked' => 'label_blocked_by',
+    'relation_relates' => 'label_relates_to',
+    'relation_precedes' => 'label_precedes',
+    'relation_follows' =>  'label_follows',
+    'relation_copied_to' => 'label_copied_to',
+    'relation_copied_from' => 'label_copied_from'
   }
 
   def self.menu_item
@@ -179,7 +189,7 @@ class IssueImport < Import
         else
           add_callback(parent_issue_id, 'set_as_parent', item.position)
         end
-      elsif parent_issue_id =~ /\A\d+\z/
+      elsif /\A\d+\z/.match?(parent_issue_id)
         # refers to other row by position
         parent_issue_id = parent_issue_id.to_i
 

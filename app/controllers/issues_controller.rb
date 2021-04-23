@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2020  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -112,6 +112,7 @@ class IssuesController < ApplicationController
         render :template => 'issues/show'
       end
       format.api do
+        @allowed_statuses = @issue.new_statuses_allowed_to(User.current)
         @changesets = @issue.changesets.visible.preload(:repository, :user).to_a
         @changesets.reverse! if User.current.wants_comments_in_reverse_order?
       end
@@ -189,6 +190,7 @@ class IssuesController < ApplicationController
     begin
       saved = save_issue_with_child_records
     rescue ActiveRecord::StaleObjectError
+      @issue.detach_saved_attachments
       @conflict = true
       if params[:last_journal_id]
         @conflict_journals = @issue.journals_after(params[:last_journal_id]).to_a
@@ -448,10 +450,10 @@ class IssuesController < ApplicationController
       end
     end
     respond_to do |format|
-      format.html {
+      format.html do
         flash[:notice] = l(:notice_successful_delete)
         redirect_back_or_default _project_issues_path(@project)
-      }
+      end
       format.api  {render_api_ok}
     end
   end
@@ -666,7 +668,7 @@ class IssuesController < ApplicationController
       if params[:project_id]
         redirect_to new_project_issue_path(@issue.project, url_params)
       else
-        url_params[:issue].merge! :project_id => @issue.project_id
+        url_params[:issue][:project_id] = @issue.project_id
         redirect_to new_issue_path(url_params)
       end
     else

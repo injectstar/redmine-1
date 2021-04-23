@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2020  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -31,11 +31,11 @@ module VersionsHelper
     options = {:fixed_version_id => version, :set_filter => 1}.merge(options)
     project =
       case version.sharing
-      when 'hierarchy', 'tree'
-        if version.project && version.project.root.visible?
+      when 'tree'
+        if version.project && version.project.root.visible? && User.current.allowed_to?(:view_issues, version.project.root)
           version.project.root
         else
-          version.project
+          nil
         end
       when 'system'
         nil

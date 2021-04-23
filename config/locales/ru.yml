@@ -902,7 +902,6 @@ ru:
   text_journal_set_to: "Параметр %{label} изменился на %{value}"
   text_length_between: "Длина между %{min} и %{max} символов."
   text_load_default_configuration: Загрузить конфигурацию по умолчанию
-  text_min_max_length_info: 0 означает отсутствие ограничений
   text_no_configuration_data: "Роли, трекеры, статусы задач и оперативный план не были сконфигурированы.\nНастоятельно рекомендуется загрузить конфигурацию по-умолчанию. Вы сможете её изменить потом."
   text_plugin_assets_writable: Каталог ресурсов модулей доступен для записи
   text_project_destroy_confirmation: Вы настаиваете на удалении данного проекта и всей относящейся к нему информации?
@@ -1239,7 +1238,7 @@ ru:
   notice_import_finished: "%{count} элемент(а, ов) были импортированы"
   notice_import_finished_with_errors: "%{count} из %{total} элемент(а, ов) не могут быть импортированы"
   error_invalid_file_encoding: Кодировка файла не соответствует выбранной %{encoding}
-  error_invalid_csv_file_or_settings: Файл не является файлом CSV или не соответствует представленным настройкам
+  error_invalid_csv_file_or_settings: Файл не является файлом CSV или не соответствует представленным настройкам (%{value})
   error_can_not_read_import_file: Во время чтения файла для импорта произошла ошибка
   permission_import_issues: Импорт задач
   label_import_issues: Импорт задач
@@ -1479,3 +1478,22 @@ ru:
   error_invalid_size_parameter: Invalid size parameter
   error_attachment_not_found: Attachment %{name} not found
   permission_delete_project: Delete the project
+  field_twofa_scheme: Two-factor authentication scheme
+  text_user_destroy_confirmation: Are you sure you want to delete this user and remove
+    all references to them? This cannot be undone. Often, locking a user instead of
+    deleting them is the better solution. To confirm, please enter their login (%{login})
+    below.
+  text_project_destroy_enter_identifier: To confirm, please enter the project's identifier
+    (%{identifier}) below.
+  button_add_subtask: Add subtask
+  notice_invalid_watcher: 'Invalid watcher: User will not receive any notifications
+    because it does not have access to view this object.'
+  button_fetch_changesets: Fetch commits
+  permission_view_message_watchers: View message watchers list
+  permission_add_message_watchers: Add message watchers
+  permission_delete_message_watchers: Delete message watchers
+  label_message_watchers: Watchers
+  button_copy_link: Copy link
+  error_invalid_authenticity_token: Invalid form authenticity token.
+  error_query_statement_invalid: An error occurred while executing the query and has
+    been logged. Please report this error to your Redmine administrator.

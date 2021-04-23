@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2020  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -54,7 +54,6 @@ class Setting < ActiveRecord::Base
                   windows-1258
                   windows-31j
                   ISO-2022-JP
-                  ISO-2022-KR
                   ISO-8859-1
                   ISO-8859-2
                   ISO-8859-3
@@ -76,7 +75,6 @@ class Setting < ActiveRecord::Base
                   CP932
                   GB18030
                   GBK
-                  ISCII91
                   EUC-KR
                   Big5
                   Big5-HKSCS
@@ -87,6 +85,7 @@ class Setting < ActiveRecord::Base
 
   validates_uniqueness_of(
     :name,
+    :case_sensitive => true,
     :if => Proc.new do |setting|
       setting.new_record? || setting.name_changed?
     end
@@ -186,7 +185,7 @@ class Setting < ActiveRecord::Base
     if settings.key?(:mail_from)
       begin
         mail_from = Mail::Address.new(settings[:mail_from])
-        raise unless mail_from.address =~ EmailAddress::EMAIL_REGEXP
+        raise unless EmailAddress::EMAIL_REGEXP.match?(mail_from.address)
       rescue
         messages << [:mail_from, l('activerecord.errors.messages.invalid')]
       end
@@ -197,7 +196,7 @@ class Setting < ActiveRecord::Base
   # Sets a setting value from params
   def self.set_from_params(name, params)
     params = params.dup
-    params.delete_if {|v| v.blank? } if params.is_a?(Array)
+    params.delete_if {|v| v.blank?} if params.is_a?(Array)
     params.symbolize_keys! if params.is_a?(Hash)
 
     m = "#{name}_from_params"
@@ -221,11 +220,11 @@ class Setting < ActiveRecord::Base
       params[:keywords].each_with_index do |keywords, i|
         next if keywords.blank?
 
-        s << attributes.inject({}) {|h, a|
+        s << attributes.inject({}) do |h, a|
           value = params[a][i].to_s
           h[a.to_s] = value if value.present?
           h
-        }.merge('keywords' => keywords)
+        end.merge('keywords' => keywords)
       end
     end
     s

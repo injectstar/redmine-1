@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2020  Jean-Philippe Lang
+# Copyright (C) 2006-2021  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -149,6 +149,19 @@ class AttachmentTest < ActiveSupport::TestCase
                          :file => mock_file_with_options(:original_filename => "test.png"),
                          :author => User.find(1))
       assert !a.save
+    end
+  end
+
+  def test_extension_update_should_be_validated_against_denied_extensions
+    with_settings :attachment_extensions_denied => "txt, png" do
+      a = Attachment.new(:container => Issue.find(1),
+                         :file => mock_file_with_options(:original_filename => "test.jpeg"),
+                         :author => User.find(1))
+      assert_save a
+
+      b = Attachment.find(a.id)
+      b.filename = "test.png"
+      assert !b.save
     end
   end
 
@@ -398,12 +411,15 @@ class AttachmentTest < ActiveSupport::TestCase
 
   def test_update_attachments
     attachments = Attachment.where(:id => [2, 3]).to_a
-
-    assert Attachment.update_attachments(attachments, {
-      '2' => {:filename => 'newname.txt', :description => 'New description'},
-      3 => {:filename => 'othername.txt'}
-    })
-
+    assert(
+      Attachment.update_attachments(
+        attachments,
+        {
+          '2' => {:filename => 'newname.txt', :description => 'New description'},
+          3 => {:filename => 'othername.txt'}
+        }
+      )
+    )
     attachment = Attachment.find(2)
     assert_equal 'newname.txt', attachment.filename
     assert_equal 'New description', attachment.description
@@ -414,23 +430,29 @@ class AttachmentTest < ActiveSupport::TestCase
 
   def test_update_attachments_with_failure
     attachments = Attachment.where(:id => [2, 3]).to_a
-
-    assert !Attachment.update_attachments(attachments, {
-      '2' => {:filename => '', :description => 'New description'},
-      3 => {:filename => 'othername.txt'}
-    })
-
+    assert(
+      !Attachment.update_attachments(
+        attachments,
+        {
+          '2' => {
+            :filename => '', :description => 'New description'
+          },
+          3 => {:filename => 'othername.txt'}
+        }
+      )
+    )
     attachment = Attachment.find(3)
     assert_equal 'logo.gif', attachment.filename
   end
 
   def test_update_attachments_should_sanitize_filename
     attachments = Attachment.where(:id => 2).to_a
-
-    assert Attachment.update_attachments(attachments, {
-      2 => {:filename => 'newname?.txt'},
-    })
-
+    assert(
+      Attachment.update_attachments(
+        attachments,
+        {2 => {:filename => 'newname?.txt'},}
+      )
+    )
     attachment = Attachment.find(2)
     assert_equal 'newname_.txt', attachment.filename
   end
@@ -462,6 +484,19 @@ class AttachmentTest < ActiveSupport::TestCase
     assert_equal false, string.valid_encoding?
 
     Attachment.latest_attach(Attachment.limit(2).to_a, string)
+  end
+
+  def test_latest_attach_should_support_unicode_case_folding
+    a_capital = Attachment.create!(
+      :author => User.find(1),
+      :file => mock_file(:filename => 'Ā.TXT')
+    )
+    a_small = Attachment.create!(
+      :author => User.find(1),
+      :file => mock_file(:filename => 'ā.txt')
+    )
+
+    assert_equal(a_small, Attachment.latest_attach([a_capital, a_small], 'Ā.TXT'))
   end
 
   def test_thumbnailable_should_be_true_for_images
